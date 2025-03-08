@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+.env
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Project specific
+*.log
+debug_*.png
+debug_*.html
+*.html
+chromedriver.exe
+*.json
+config.ini
+credentials.txt
+*.db
+*.sqlite3
+
+# Sensitive data
+*.pem
+*.key
+*.env
+secrets.py
+*_secret*
+*_token*
+*_password*
+*_credential*
+
+# Debug files
+debug/
+logs/
+
+# 日志文件
+*.log
+
+# 浏览器驱动
+drivers/ 
