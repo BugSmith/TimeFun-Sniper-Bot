@@ -1,5 +1,7 @@
 # TimeFun Sniper Bot
 
+[![en](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![cn](https://img.shields.io/badge/语言-中文-red.svg)](README_CN.md)
+
 这是一个监控Twitter并在time.fun网站上自动购买时间币的机器人。
 
 > **开发进度**: [已完成] 自动买入功能已完成并测试通过，可以成功识别和点击购买按钮。[开发中] 推特监控功能仍在开发中。
