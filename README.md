@@ -1,6 +1,6 @@
 # TimeFun Sniper Bot
 
-`lang` [English](README.md) | [中文](README_CN.md)
+[![en](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![cn](https://img.shields.io/badge/语言-中文-red.svg)](README_CN.md)
 
 This is a bot that monitors Twitter and automatically buys time coins on the time.fun website.
 
