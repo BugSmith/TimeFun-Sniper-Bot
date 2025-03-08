@@ -14,7 +14,7 @@ This is a bot that monitors Twitter and automatically buys time coins on the tim
 - Connects to your existing Chrome session to avoid Cloudflare detection
 - Supports two-step purchase confirmation process
 
-## ?? Security Notice
+## [SAFE]Security Notice
 
 **IMPORTANT:** This bot requires access to your Chrome browser and TimeFun account. Please review the following security considerations:
 
