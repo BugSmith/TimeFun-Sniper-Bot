@@ -2,7 +2,7 @@
 
 This is a bot that monitors Twitter and automatically buys time coins on the time.fun website.
 
-> **Development Status**: ? Auto-buying functionality is complete and tested successfully. ? Twitter monitoring functionality is still under development.
+> **Development Status**: [COMPLETE] Auto-buying functionality is complete and tested successfully. [IN PROGRESS] Twitter monitoring functionality is still under development.
 
 ## Features
 
@@ -177,19 +177,19 @@ The program will monitor @timedotfun's Twitter account and automatically buy tim
 
 Current version: 1.0.0
 
-- ? Auto-buying functionality complete
-  - ? Chrome integration with remote debugging
-  - ? Automatic Chrome startup
-  - ? Market tab navigation
-  - ? Two-step purchase process
-  - ? Detailed error logging and screenshots
-- ? Twitter monitoring under development
-  - ? Real-time monitoring of @timedotfun account
-  - ? Automatic identification of promoted usernames
-- ? Planned features
-  - ? Improved error handling and recovery
-  - ? Web interface for monitoring and control
-  - ? Support for multiple accounts
+- [COMPLETE] Auto-buying functionality complete
+  - [COMPLETE] Chrome integration with remote debugging
+  - [COMPLETE] Automatic Chrome startup
+  - [COMPLETE] Market tab navigation
+  - [COMPLETE] Two-step purchase process
+  - [COMPLETE] Detailed error logging and screenshots
+- [IN PROGRESS] Twitter monitoring under development
+  - [IN PROGRESS] Real-time monitoring of @timedotfun account
+  - [IN PROGRESS] Automatic identification of promoted usernames
+- [PLANNED] Planned features
+  - [PLANNED] Improved error handling and recovery
+  - [PLANNED] Web interface for monitoring and control
+  - [PLANNED] Support for multiple accounts
 
 ## Important Notes
 
