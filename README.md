@@ -1,5 +1,7 @@
 # TimeFun Sniper Bot
 
+[English](README.md) | [ÖÐÎÄ](README_CN.md)
+
 This is a bot that monitors Twitter and automatically buys time coins on the time.fun website.
 
 > **Development Status**: [COMPLETE] Auto-buying functionality is complete and tested successfully. [IN PROGRESS] Twitter monitoring functionality is still under development.
