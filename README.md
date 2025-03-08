@@ -1,6 +1,6 @@
 # TimeFun Sniper Bot
 
-[![en](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![cn](https://img.shields.io/badge/ÓïÑÔ-ÖÐÎÄ-red.svg)](README_CN.md)
+[![en](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![cn](https://img.shields.io/badge/è¯­è¨€-ä¸­æ–‡-red.svg)](README_CN.md)
 
 This is a bot that monitors Twitter and automatically buys time coins on the time.fun website.
 
