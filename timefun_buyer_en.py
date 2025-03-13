@@ -3,10 +3,10 @@ import os
 import time
 import sys
 import random
-import json
 import socket
 import subprocess
 import re
+from datetime import datetime, timezone, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -15,6 +15,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from dotenv import load_dotenv
+import argparse
 
 class TimeFunBuyer:
     def __init__(self, use_existing_session=True):
@@ -37,7 +38,7 @@ class TimeFunBuyer:
         # Browser settings
         self.headless = os.getenv('HEADLESS', 'True').lower().strip() == 'true'
         self.use_existing_session = use_existing_session
-        self.chrome_process = None  # We don't start Chrome, so no process to track
+        self.chrome_process = None
         self.setup_browser()
         
         # Login status
@@ -629,6 +630,11 @@ class TimeFunBuyer:
     
     def buy_with_retry(self, username):
         """Try to buy multiple times until success or max attempts reached"""
+        # First check if user exists on time.fun
+        if not self.check_user_exists(username):
+            print(f"Cannot buy {username} as they don't exist on time.fun")
+            return False
+            
         for attempt in range(1, self.max_buy_attempts + 1):
             print(f"Attempting to buy {username} (Attempt {attempt}/{self.max_buy_attempts})")
             
@@ -665,3 +671,365 @@ class TimeFunBuyer:
                     print("Chrome session closed")
                 except:
                     pass 
+    
+    def check_user_exists(self, username):
+        """Check if a user exists on time.fun platform
+        
+        Args:
+            username: Username to check
+            
+        Returns:
+            bool: True if user exists, False otherwise
+        """
+        try:
+            print(f"Checking if user '{username}' exists on time.fun...")
+            # Visit user page
+            user_url = f"https://time.fun/{username}"
+            self.driver.get(user_url)
+            time.sleep(3)  # Wait for page to load or redirect
+            
+            # Check current URL
+            current_url = self.driver.current_url
+            print(f"Current URL after check: {current_url}")
+            
+            # If redirected to explore page, user doesn't exist
+            if "explore" in current_url or current_url == "https://time.fun/":
+                print(f"User '{username}' does not exist on time.fun")
+                return False
+                
+            # Check if we're on the user's page
+            if username.lower() in current_url.lower():
+                print(f"User '{username}' exists on time.fun")
+                return True
+                
+            # Additional check for page content
+            try:
+                # Look for typical elements on user profile
+                if self.is_element_present(By.XPATH, f"//h1[contains(text(), '{username}')]") or \
+                   self.is_element_present(By.XPATH, "//button[contains(text(), 'Buy Time')]") or \
+                   self.is_element_present(By.XPATH, "//div[contains(@class, 'profile')]"):
+                    print(f"User '{username}' exists on time.fun (verified by page content)")
+                    return True
+            except:
+                pass
+                
+            # Default to false if unsure
+            print(f"Cannot verify if user '{username}' exists on time.fun")
+            return False
+            
+        except Exception as e:
+            print(f"Error checking if user exists: {e}")
+            return False
+    
+    def extract_tweet_time(self, tweet, timezone_offset=8):
+        """Extract the timestamp from a tweet and determine if it's recent
+        
+        Args:
+            tweet: The tweet element
+            timezone_offset: Hours offset from UTC (default: 8 for Beijing time)
+            
+        Returns:
+            bool: True if the tweet is from the last minute, False otherwise
+        """
+        try:
+            # Look for time element
+            time_element = tweet.find_element(By.CSS_SELECTOR, "time")
+            
+            # Get the timestamp attribute
+            timestamp = time_element.get_attribute("datetime")
+            if timestamp:
+                # Convert to datetime
+                tweet_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                
+                # Get current time in UTC
+                current_time_utc = datetime.now(timezone.utc)
+                
+                # Calculate time difference in seconds (both in UTC for accurate comparison)
+                time_diff = (current_time_utc - tweet_time).total_seconds()
+                
+                # Format times for logging, converting to local time for better readability
+                local_tweet_time = tweet_time + timedelta(hours=timezone_offset)
+                local_current_time = current_time_utc + timedelta(hours=timezone_offset)
+                
+                print(f"Tweet timestamp: {local_tweet_time} (beijing), Current time: {local_current_time} (beijing)")
+                print(f"Time difference: {time_diff:.0f} seconds ago")
+                
+                # Check if it's within the last minute (60 seconds)
+                # This calculation is timezone-independent because we're comparing UTC timestamps
+                return time_diff <= 60
+            
+            # If no timestamp attribute, check the text
+            relative_time = time_element.text.lower()
+            print(f"Tweet relative time: {relative_time}")
+            
+            # Check common recent time indicators
+            recent_indicators = ["just now", "now", "1s", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", 
+                                "10s", "20s", "30s", "40s", "50s", "s ago", "just", "刚刚", "秒前"]
+            
+            for indicator in recent_indicators:
+                if indicator in relative_time:
+                    print(f"Tweet is recent based on text indicator: {relative_time}")
+                    return True
+                    
+            # If it mentions minutes, check if it's under 1m
+            if "m" in relative_time or "min" in relative_time:
+                for num in range(2, 60):  # Checking for "2m", "3m", etc.
+                    if f"{num}m" in relative_time or f"{num} m" in relative_time or f"{num} min" in relative_time:
+                        return False
+                
+                # If it's "1m" or "1 min", it might be just crossing over the 1-minute threshold
+                # Conservatively treat it as recent
+                if "1m" in relative_time or "1 min" in relative_time:
+                    print("Tweet is from 1 minute ago, considering it recent")
+                    return True
+            
+            # By default, consider it not recent if we can't determine
+            return False
+                
+        except Exception as e:
+            print(f"Error extracting tweet time: {e}")
+            # If we can't determine the time, default to not recent
+            return False
+    
+    def monitor_tweets(self, username, continuous_monitoring=False, check_interval=30, timezone_offset=8, max_tweets_to_check=5):
+        """Monitor tweets of specified user
+        
+        Args:
+            username: Twitter username to monitor
+            continuous_monitoring: Whether to continuously monitor (default: False)
+            check_interval: Time between checks in seconds (default: 30)
+            timezone_offset: Hours offset from UTC (default: 8 for Beijing time)
+            max_tweets_to_check: Maximum number of tweets to check each time (default: 5)
+        """
+        last_tweet_id = None
+        processed_tweets = set()  # Track processed tweet IDs
+        
+        while True:
+            try:
+                print(f"Starting to monitor @{username}'s tweets...")
+                
+                # Visit user profile
+                url = f"https://x.com/{username}"
+                self.driver.get(url)
+                time.sleep(5)  # Wait for page load
+                
+                # Wait for tweets to load
+                tweet_selector = "article[data-testid='tweet']"
+                WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, tweet_selector))
+                )
+                
+                # Get all tweets
+                all_tweets = self.driver.find_elements(By.CSS_SELECTOR, tweet_selector)
+                print(f"Found {len(all_tweets)} tweets on the page")
+                
+                # Limit to checking only the most recent tweets
+                tweets = all_tweets[:max_tweets_to_check] if max_tweets_to_check < len(all_tweets) else all_tweets
+                print(f"Checking the {len(tweets)} most recent tweets")
+                
+                if tweets:
+                    found_recent_tweet = False
+                    for tweet in tweets:
+                        try:
+                            # Get tweet ID
+                            tweet_id = tweet.get_attribute("data-tweet-id")
+                            if tweet_id in processed_tweets:
+                                continue
+                            
+                            # Check if the tweet is recent (within the last minute)
+                            if not self.extract_tweet_time(tweet, timezone_offset):
+                                print("Skipping tweet - not from the last minute")
+                                processed_tweets.add(tweet_id)  # Still mark as processed
+                                continue
+                                
+                            found_recent_tweet = True
+                            print("Found recent tweet (within last minute), processing...")
+                            
+                            # Get tweet text
+                            tweet_text = tweet.find_element(By.CSS_SELECTOR, "[data-testid='tweetText']").text
+                            print(f"New tweet content: {tweet_text}")
+                            
+                            # Check if it's a retweet
+                            is_retweet = False
+                            try:
+                                retweet_indicator = tweet.find_element(By.XPATH, 
+                                    ".//span[contains(text(), 'Retweeted') or contains(text(), '转发') or contains(text(), 'reposted')]")
+                                is_retweet = True
+                                print("This is a retweet")
+                            except:
+                                print("This is an original tweet")
+                            
+                            # Extract usernames
+                            usernames = self.extract_usernames(tweet_text)
+                            if usernames:
+                                print(f"Extracted usernames: {usernames}")
+                                
+                                # Try to buy for each username
+                                for username_to_buy in usernames:
+                                    print(f"Attempting to buy for user: {username_to_buy}")
+                                    try:
+                                        # First check if user exists on time.fun
+                                        if not self.check_user_exists(username_to_buy):
+                                            print(f"Skipping {username_to_buy} as they don't exist on time.fun")
+                                            continue
+                                            
+                                        # Use our own buy method directly
+                                        success = self.buy_with_retry(username_to_buy)
+                                        if success:
+                                            print(f"Successfully bought for user: {username_to_buy}")
+                                        else:
+                                            print(f"Failed to buy for user: {username_to_buy}")
+                                    except Exception as e:
+                                        print(f"Error buying for user {username_to_buy}: {str(e)}")
+                            else:
+                                print("No usernames found in tweet")
+                                
+                            # Mark tweet as processed
+                            processed_tweets.add(tweet_id)
+                            
+                        except Exception as e:
+                            print(f"Error processing tweet: {str(e)}")
+                            continue
+                    
+                    if not found_recent_tweet:
+                        print("No recent tweets found within the last minute")
+                else:
+                    print("No tweets found")
+                
+                if not continuous_monitoring:
+                    break
+                    
+                # Wait before next check
+                print(f"Waiting {check_interval} seconds before next check...")
+                time.sleep(check_interval)
+                
+            except Exception as e:
+                print(f"Error monitoring tweets: {str(e)}")
+                self.save_debug_info("monitor_tweets_error")
+                if not continuous_monitoring:
+                    break
+                time.sleep(check_interval)  # Wait before retrying
+                
+    def extract_usernames(self, text):
+        """Extract usernames from text"""
+        # Match @username format
+        pattern = r'@(\w+)'
+        usernames = re.findall(pattern, text)
+        return usernames 
+
+    def save_debug_info(self, prefix):
+        """Save debug information including screenshot and page source"""
+        try:
+            # Save screenshot
+            screenshot_path = f"debug_{prefix}_screenshot.png"
+            self.driver.save_screenshot(screenshot_path)
+            print(f"Debug screenshot saved: {screenshot_path}")
+            
+            # Save page source
+            page_source_path = f"debug_{prefix}_page_source.html"
+            with open(page_source_path, "w", encoding="utf-8") as f:
+                f.write(self.driver.page_source)
+            print(f"Debug page source saved: {page_source_path}")
+        except Exception as e:
+            print(f"Error saving debug info: {str(e)}")
+
+def run_monitor(twitter_username="timedotfun", check_interval=30, skip_login_check=True, timezone_offset=8, max_tweets=5):
+    """Run the TimeFun Sniper Bot to monitor Twitter and auto-buy
+    
+    Args:
+        twitter_username: Twitter username to monitor (default: timedotfun)
+        check_interval: Time between checks in seconds (default: 30)
+        skip_login_check: Skip login verification (default: True)
+        timezone_offset: Hours offset from UTC (default: 8 for Beijing time)
+        max_tweets: Maximum number of tweets to check each time (default: 5)
+    """
+    print(f"=== TimeFun Sniper Bot ===")
+    print(f"Initializing bot to monitor @{twitter_username} tweets and auto-buy...")
+    print(f"Check interval: {check_interval} seconds")
+    print(f"Timezone: UTC+{timezone_offset} (offset from UTC)")
+    print(f"Checking max {max_tweets} recent tweets each time")
+    
+    # Initialize the buyer
+    buyer = TimeFunBuyer(use_existing_session=True)
+    
+    try:
+        # Check login status only if explicitly requested
+        if not skip_login_check:
+            print("Checking login status...")
+            if not buyer.check_login_status():
+                print("Not logged in to TimeFun.")
+                print("Please log in to TimeFun in your Chrome browser, then restart the bot.")
+                return
+            print("Login verified. Starting Twitter monitoring...")
+        else:
+            print("Skipping login check. Starting Twitter monitoring...")
+            buyer.is_logged_in = True
+        
+        # Start monitoring tweets
+        buyer.monitor_tweets(twitter_username, continuous_monitoring=True, 
+                           check_interval=check_interval, timezone_offset=timezone_offset,
+                           max_tweets_to_check=max_tweets)
+        
+    except KeyboardInterrupt:
+        print("\nBot stopped by user.")
+    except Exception as e:
+        print(f"Error running bot: {e}")
+        buyer.save_debug_info("bot_error")
+    finally:
+        print("Closing browser session...")
+        buyer.close()
+
+if __name__ == "__main__":
+    # Load environment variables
+    load_dotenv(dotenv_path=".env.utf8")
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="TimeFun Sniper Bot")
+    parser.add_argument("--username", "-u", default="timedotfun", 
+                        help="Twitter username to monitor (default: timedotfun)")
+    parser.add_argument("--interval", "-i", type=int, default=30,
+                        help="Check interval in seconds (default: 30)")
+    parser.add_argument("--check-login", "-c", action="store_true",
+                        help="Force login check (default: login check is skipped)")
+    parser.add_argument("--timezone", "-t", type=int, default=8,
+                        help="Timezone offset from UTC in hours (default: 8 for Beijing)")
+    parser.add_argument("--max-tweets", "-m", type=int, default=5,
+                        help="Maximum number of tweets to check (default: 5)")
+    parser.add_argument("--buy", "-b", metavar="TIMEFUN_USERNAME",
+                        help="Directly buy a specific user without monitoring")
+    parser.add_argument("--verify", "-v", metavar="TIMEFUN_USERNAME",
+                        help="Verify if a user exists on time.fun without buying")
+    
+    args = parser.parse_args()
+    
+    # Run in verification-only mode if specified
+    if args.verify:
+        buyer = TimeFunBuyer(use_existing_session=True)
+        try:
+            exists = buyer.check_user_exists(args.verify)
+            print(f"User '{args.verify}' {'exists' if exists else 'does not exist'} on time.fun")
+        finally:
+            buyer.close()
+    # Run in buy-only mode if specified
+    elif args.buy:
+        buyer = TimeFunBuyer(use_existing_session=True)
+        try:
+            if args.check_login and not buyer.check_login_status():
+                print("Not logged in to TimeFun. Please log in and try again.")
+                sys.exit(1)
+            else:
+                # Skip login check by default
+                buyer.is_logged_in = True
+            
+            print(f"Attempting to buy user: {args.buy}")
+            success = buyer.buy_with_retry(args.buy)
+            if success:
+                print(f"Successfully bought {args.buy}'s time coin!")
+            else:
+                print(f"Failed to buy {args.buy}")
+        finally:
+            buyer.close()
+    else:
+        # Run in monitor mode
+        run_monitor(args.username, args.interval, not args.check_login, 
+                  args.timezone, args.max_tweets) 

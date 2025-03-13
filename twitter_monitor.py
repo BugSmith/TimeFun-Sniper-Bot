@@ -58,7 +58,7 @@ class TwitterMonitor:
         
         # Try to match patterns: "has retweeted Username" or "@Username"
         patterns = [
-            r"ÒÑ×ªÌû\s+(\w+)",  # Match "ÒÑ×ªÌû Username"
+            r"ï¿½ï¿½×ªï¿½ï¿½\s+(\w+)",  # Match "ï¿½ï¿½×ªï¿½ï¿½ Username"
             r"@(\w+)",          # Match "@Username"
         ]
         

@@ -6,36 +6,36 @@ from twitter_monitor import TwitterMonitor
 from dotenv import load_dotenv
 
 def signal_handler(sig, frame):
-    """´¦ÀíCtrl+CÐÅºÅ£¬ÓÅÑÅµØÍË³ö³ÌÐò"""
-    print("\nÕýÔÚÍË³ö³ÌÐò...")
+    """ï¿½ï¿½ï¿½ï¿½Ctrl+Cï¿½ÅºÅ£ï¿½ï¿½ï¿½ï¿½Åµï¿½ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½"""
+    print("\nï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½ï¿½ï¿½ï¿½...")
     sys.exit(0)
 
 def handle_new_promotion(username):
-    """´¦ÀíÐÂ·¢ÏÖµÄÍÆ¹ãÓÃ»§"""
-    print(f"·¢ÏÖÐÂÍÆ¹ãÓÃ»§: {username}")
-    print(f"ÓÃ»§Ò³Ãæ: https://time.fun/{username}")
+    """ï¿½ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½Öµï¿½ï¿½Æ¹ï¿½ï¿½Ã»ï¿½"""
+    print(f"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¹ï¿½ï¿½Ã»ï¿½: {username}")
+    print(f"ï¿½Ã»ï¿½Ò³ï¿½ï¿½: https://time.fun/{username}")
     print("-" * 50)
 
 if __name__ == "__main__":
-    # ¼ÓÔØ»·¾³±äÁ¿
+    # ï¿½ï¿½ï¿½Ø»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     load_dotenv(dotenv_path=".env.utf8")
     
-    # ×¢²áÐÅºÅ´¦ÀíÆ÷£¬´¦ÀíCtrl+C
+    # ×¢ï¿½ï¿½ï¿½ÅºÅ´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ctrl+C
     signal.signal(signal.SIGINT, signal_handler)
     
-    print("=== Twitter¼à¿Ø²âÊÔ ===")
-    print("ÕýÔÚ³õÊ¼»¯Twitter¼à¿ØÄ£¿é...")
+    print("=== Twitterï¿½ï¿½Ø²ï¿½ï¿½ï¿½ ===")
+    print("ï¿½ï¿½ï¿½Ú³ï¿½Ê¼ï¿½ï¿½Twitterï¿½ï¿½ï¿½Ä£ï¿½ï¿½...")
     
-    # ³õÊ¼»¯Twitter¼à¿ØÄ£¿é
+    # ï¿½ï¿½Ê¼ï¿½ï¿½Twitterï¿½ï¿½ï¿½Ä£ï¿½ï¿½
     monitor = TwitterMonitor()
     
-    print("³õÊ¼»¯Íê³É£¬¿ªÊ¼¼à¿Ø...")
-    print("°´Ctrl+CÍË³ö")
+    print("ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½...")
+    print("ï¿½ï¿½Ctrl+Cï¿½Ë³ï¿½")
     print("-" * 50)
     
     try:
-        # ¿ªÊ¼¼à¿ØTwitter
+        # ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Twitter
         monitor.monitor(handle_new_promotion)
     except Exception as e:
-        print(f"³ÌÐòÔËÐÐ³ö´í: {e}")
+        print(f"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð³ï¿½ï¿½ï¿½: {e}")
         sys.exit(1) 

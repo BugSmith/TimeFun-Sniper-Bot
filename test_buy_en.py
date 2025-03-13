@@ -3,6 +3,7 @@ import sys
 import os
 from timefun_buyer_en import TimeFunBuyer
 from dotenv import load_dotenv
+import time
 
 def setup_instructions():
     """Display setup instructions for the user"""
@@ -62,28 +63,20 @@ def test_buy(username, skip_login_check=False):
         # Disconnect from Chrome (but don't close it)
         buyer.close()
 
+def test_monitor_tweets():
+    buyer = TimeFunBuyer()
+    try:
+        # Test monitoring @LinqinEth's tweets
+        print("Starting to monitor @LinqinEth's tweets...")
+        buyer.monitor_tweets("LinqinEth")
+    except Exception as e:
+        print(f"Error during monitoring: {str(e)}")
+    finally:
+        buyer.close()
+
 if __name__ == "__main__":
     # Load environment variables from .env.utf8
     load_dotenv(dotenv_path=".env.utf8")
     
-    # Check command line arguments
-    if len(sys.argv) < 2:
-        print("Usage: python test_buy_en.py <username> [--skip-login-check]")
-        sys.exit(1)
-    
-    # Get username to test
-    username = sys.argv[1]
-    
-    # Check if we should skip login check
-    skip_login_check = "--skip-login-check" in sys.argv
-    
-    # Show setup instructions
-    if not setup_instructions():
-        print("Test cancelled. Please start Chrome with remote debugging and try again.")
-        sys.exit(0)
-    
-    # Run test
-    success = test_buy(username, skip_login_check)
-    
-    # Set exit code based on test result
-    sys.exit(0 if success else 1) 
+    # Run Twitter monitoring test
+    test_monitor_tweets() 
