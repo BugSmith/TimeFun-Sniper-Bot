@@ -20,7 +20,7 @@ This is a bot that monitors Twitter and automatically buys time coins on the tim
 
 - The bot connects to your Chrome browser with remote debugging enabled, which could potentially expose your browser to other applications
 - Your Chrome user data directory contains sensitive information including cookies and saved passwords
-- The `.env.utf8` file contains sensitive API keys and credentials
+- The `.env.utf8` file contains configuration settings
 - Never share your `.env.utf8` file, debug screenshots, or Chrome user data directory
 - Review the code before running it to ensure it meets your security requirements
 
@@ -35,16 +35,6 @@ This is a bot that monitors Twitter and automatically buys time coins on the tim
 Configure the following in your `.env.utf8` file (note: do not add comments after values as this may cause parsing errors):
 
 ```
-# Twitter API credentials
-TWITTER_API_KEY=your_api_key
-TWITTER_API_SECRET=your_api_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
-
-# TimeFun account information
-TIMEFUN_EMAIL=your_email
-TIMEFUN_PASSWORD=your_password
-
 # Buy settings
 BUY_AMOUNT=2
 MAX_BUY_ATTEMPTS=3
@@ -71,8 +61,6 @@ Make sure to use double backslashes (`\\`) in Windows paths.
 
 ### Configuration Details
 
-- `TIMEFUN_EMAIL`: Your TimeFun account email (for reference only)
-- `TIMEFUN_PASSWORD`: No longer used but kept for compatibility
 - `BUY_AMOUNT`: Amount of USDC to buy each time
 - `MAX_BUY_ATTEMPTS`: Maximum number of buy attempts
 - `BUY_DELAY`: Delay between buy operations (seconds)
@@ -113,18 +101,40 @@ The bot can now automatically start Chrome with the correct parameters if:
 - Chrome is not already running with remote debugging
 - You have correctly set the `CHROME_USER_DATA_DIR` in your `.env.utf8` file
 
-## How Buying Works
+## Usage
 
-The bot navigates directly to the user's market tab (e.g., https://time.fun/username?tab=market) where the Buy button is located. It will:
+The program provides the following operation modes:
 
-1. Try to find the Buy button using various selectors
-2. Click the Buy button when found
-3. Enter the configured amount of USDC
-4. Click the final "Confirm & Buy" button to complete the purchase
+### 1. Monitor Mode (Main Function)
 
-The bot now supports the two-step purchase process:
-- First click on the "Buy X mins for $Y" button
-- Then click on the "Confirm & Buy X mins for $Y" button
+Use `timefun_buyer_en.py` to monitor Twitter and auto-buy:
+
+```bash
+python timefun_buyer_en.py [options]
+```
+
+Available options:
+- `--username` or `-u`: Set Twitter username to monitor (default: timedotfun)
+- `--interval` or `-i`: Set check interval in seconds (default: 30)
+- `--timezone` or `-t`: Set timezone offset (default: 8 for Beijing time)
+- `--max-tweets` or `-m`: Set maximum tweets to check each time (default: 5)
+- `--skip-login-check`: Skip login verification
+
+### 2. Direct Buy Mode
+
+Use `timefun_buyer_en.py` to buy time coins for a specific user:
+
+```bash
+python timefun_buyer_en.py --buy USERNAME [--skip-login-check]
+```
+
+### 3. Verify Mode
+
+Verify if a user exists on time.fun:
+
+```bash
+python timefun_buyer_en.py --verify USERNAME
+```
 
 ## Troubleshooting
 
@@ -132,66 +142,41 @@ The bot now supports the two-step purchase process:
 
 If the bot fails to detect that you're logged in even though you are, use the `--skip-login-check` flag:
 
-```
-python main.py --skip-login-check
-```
-
-or for testing:
-
-```
-python test_buy_en.py <username> --skip-login-check
+```bash
+python timefun_buyer_en.py --skip-login-check
 ```
 
 ### Button Detection Issues
 
 If the bot cannot find the Buy button:
-1. Check the debug screenshots saved in the project directory
+1. Check the debug screenshots saved in the project directory (debug_screenshot_*.png)
 2. Review the console output for button text information
 3. Make sure you're logged into TimeFun in your Chrome session
 
-## Testing
-
-Before running the main program, you can run tests:
-
-1. Test network connection: `python test_connection.py`
-2. Test buying functionality: `python test_buy_en.py <username>`
-3. Test Twitter monitoring: `python test_monitor.py`
-
-## Usage
-
-Run the main program:
-
-```
-python main.py
-```
-
-The program will monitor @timedotfun's Twitter account and automatically buy time coins for promoted users.
-
 ## File Descriptions
 
-- `main.py` - Main program that integrates Twitter monitoring and TimeFun buying
-- `twitter_monitor.py` - Twitter monitoring module
-- `timefun_buyer_en.py` - TimeFun buying module
-- `test_*.py` - Various test scripts
-- `.env.utf8` - Environment variables configuration
+- `timefun_buyer_en.py` - Main program with monitoring and buying functionality
+- `test_buy_en.py` - Buying functionality test script
+- `.env.utf8` - Environment variables configuration file
 
 ## Development Status
 
 Current version: 1.0.0
 
-- [COMPLETE] Auto-buying functionality complete
-  - [COMPLETE] Chrome integration with remote debugging
-  - [COMPLETE] Automatic Chrome startup
-  - [COMPLETE] Market tab navigation
-  - [COMPLETE] Two-step purchase process
-  - [COMPLETE] Detailed error logging and screenshots
-- [COMPLETE] Twitter monitoring functionality complete
-  - [COMPLETE] Real-time monitoring of @timedotfun account
-  - [COMPLETE] Automatic identification of promoted usernames
-- [PLANNED] Future enhancements
-  - [PLANNED] Web interface for monitoring and control
-  - [PLANNED] Support for multiple accounts
-  - [COMPLETE] Improved error handling and recovery
+### Completed Features
+- [COMPLETE] Auto-buying functionality
+  - Chrome integration and remote debugging
+  - Automatic Chrome startup
+  - Market page navigation
+  - Two-step purchase process
+  - Detailed error logging and screenshots
+- [COMPLETE] Twitter monitoring functionality
+  - Real-time monitoring of @timedotfun account
+  - Automatic identification of promoted usernames
+
+### Planned Features
+- [PLANNED] Web interface for monitoring and control
+- [PLANNED] Support for multiple accounts
 
 ## Important Notes
 

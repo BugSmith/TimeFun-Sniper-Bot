@@ -4,7 +4,7 @@
 
 这是一个监控Twitter并在time.fun网站上自动购买时间币的机器人。
 
-> **开发进度**: [已完成] 自动买入功能已完成并测试通过，可以成功识别和点击购买按钮。[开发中] 推特监控功能仍在开发中。
+> **开发状态**: [已完成] 自动购买功能已完成并测试通过。[已完成] Twitter监控功能已完成。
 
 ## 功能特点
 
@@ -20,7 +20,7 @@
 
 - 机器人通过远程调试模式连接到您的Chrome浏览器，这可能会使您的浏览器暴露给其他应用程序
 - 您的Chrome用户数据目录包含敏感信息，包括cookies和保存的密码
-- `.env.utf8`文件包含敏感的API密钥和凭据
+- `.env.utf8`文件包含配置信息
 - 切勿共享您的`.env.utf8`文件、调试截图或Chrome用户数据目录
 - 在运行前请审查代码，确保它符合您的安全要求
 
@@ -35,16 +35,6 @@
 在您的`.env.utf8`文件中配置以下内容（注意：不要在值后面添加注释，这可能会导致解析错误）：
 
 ```
-# Twitter API凭据
-TWITTER_API_KEY=your_api_key
-TWITTER_API_SECRET=your_api_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
-
-# TimeFun账户信息
-TIMEFUN_EMAIL=your_email
-TIMEFUN_PASSWORD=your_password
-
 # 购买设置
 BUY_AMOUNT=2
 MAX_BUY_ATTEMPTS=3
@@ -71,8 +61,6 @@ CHROME_USER_DATA_DIR=C:\\Users\\YourUsername\\AppData\\Local\\Google\\Chrome\\Us
 
 ### 配置详情
 
-- `TIMEFUN_EMAIL`: 您的TimeFun账户邮箱（仅供参考）
-- `TIMEFUN_PASSWORD`: 不再使用但为了兼容性而保留
 - `BUY_AMOUNT`: 每次购买的USDC金额
 - `MAX_BUY_ATTEMPTS`: 最大购买尝试次数
 - `BUY_DELAY`: 购买操作之间的延迟（秒）
@@ -113,18 +101,40 @@ CHROME_USER_DATA_DIR=C:\\Users\\YourUsername\\AppData\\Local\\Google\\Chrome\\Us
 - Chrome尚未以远程调试模式运行
 - 您已在`.env.utf8`文件中正确设置了`CHROME_USER_DATA_DIR`
 
-## 购买流程说明
+## 使用方法
 
-机器人会直接导航到用户的市场标签页（例如，https://time.fun/username?tab=market），在那里可以找到购买按钮。它将：
+程序提供了以下运行模式：
 
-1. 尝试使用各种选择器找到购买按钮
-2. 找到后点击购买按钮
-3. 输入配置的USDC金额
-4. 点击最终的"确认并购买"按钮完成购买
+### 1. 监控模式（主要功能）
 
-机器人现在支持两步购买流程：
-- 首先点击"购买X分钟，价格$Y"按钮
-- 然后点击"确认并购买X分钟，价格$Y"按钮
+使用`timefun_buyer_en.py`来监控Twitter并自动购买：
+
+```bash
+python timefun_buyer_en.py [选项]
+```
+
+可用选项：
+- `--username` 或 `-u`: 设置要监控的Twitter用户名（默认：timedotfun）
+- `--interval` 或 `-i`: 设置检查间隔（秒，默认：30）
+- `--timezone` 或 `-t`: 设置时区偏移（默认：8，北京时间）
+- `--max-tweets` 或 `-m`: 设置每次检查的最大推文数（默认：5）
+- `--skip-login-check`: 跳过登录检查
+
+### 2. 直接购买模式
+
+使用`timefun_buyer_en.py`直接购买指定用户的时间币：
+
+```bash
+python timefun_buyer_en.py --buy 用户名 [--skip-login-check]
+```
+
+### 3. 验证模式
+
+验证用户是否存在于time.fun：
+
+```bash
+python timefun_buyer_en.py --verify 用户名
+```
 
 ## 故障排除
 
@@ -132,66 +142,41 @@ CHROME_USER_DATA_DIR=C:\\Users\\YourUsername\\AppData\\Local\\Google\\Chrome\\Us
 
 如果机器人无法检测到您已登录（即使您确实已登录），请使用`--skip-login-check`标志：
 
-```
-python main.py --skip-login-check
-```
-
-或者用于测试：
-
-```
-python test_buy_en.py <用户名> --skip-login-check
+```bash
+python timefun_buyer_en.py --skip-login-check
 ```
 
 ### 按钮检测问题
 
 如果机器人找不到购买按钮：
-1. 检查项目目录中保存的调试截图
+1. 检查项目目录中保存的调试截图（debug_screenshot_*.png）
 2. 查看控制台输出中的按钮文本信息
 3. 确保您在Chrome会话中已登录TimeFun
 
-## 测试
-
-在运行主程序之前，您可以运行测试：
-
-1. 测试网络连接: `python test_connection.py`
-2. 测试购买功能: `python test_buy_en.py <用户名>`
-3. 测试Twitter监控: `python test_monitor.py`
-
-## 使用方法
-
-运行主程序：
-
-```
-python main.py
-```
-
-程序将监控@timedotfun的Twitter账号，并自动为推广用户购买时间币。
-
 ## 文件说明
 
-- `main.py` - 集成Twitter监控和TimeFun购买的主程序
-- `twitter_monitor.py` - Twitter监控模块
-- `timefun_buyer_en.py` - TimeFun购买模块
-- `test_*.py` - 各种测试脚本
-- `.env.utf8` - 环境变量配置
+- `timefun_buyer_en.py` - 主程序，包含监控和购买功能
+- `test_buy_en.py` - 购买功能测试脚本
+- `.env.utf8` - 环境变量配置文件
 
 ## 开发状态
 
 当前版本: 1.0.0
 
-- [已完成] 自动买入功能已完成
-  - [已完成] Chrome集成与远程调试
-  - [已完成] 自动启动Chrome
-  - [已完成] 市场标签页导航
-  - [已完成] 两步购买流程
-  - [已完成] 详细错误日志和截图
-- [已完成] 推特监控功能已完成
-  - [已完成] 实时监控@timedotfun账号
-  - [已完成] 自动识别推广用户名
-- [计划中] 未来增强功能
-  - [计划中] Web界面监控和控制
-  - [计划中] 多账户支持
-  - [已完成] 改进错误处理和恢复机制
+### 已完成功能
+- [已完成] 自动购买功能
+  - Chrome集成和远程调试
+  - 自动启动Chrome
+  - 市场页面导航
+  - 两步购买流程
+  - 详细错误日志和截图
+- [已完成] Twitter监控功能
+  - 实时监控@timedotfun账号
+  - 自动识别推广用户名
+
+### 计划中的功能
+- [计划中] Web界面监控和控制
+- [计划中] 多账户支持
 
 ## 重要提示
 
